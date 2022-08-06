@@ -1,0 +1,151 @@
+/*
+ * Os pinos 2 e 7 são para velocidade (PWM)
+ */
+int ponteH[] = {2, 3, 4, 5, 6, 7};
+int lenPonteH = sizeof(ponteH)/sizeof(ponteH[0]);
+
+/*
+ * Os sensores A0 ao A2 são da frente
+ * Os sensores A3 ao A7 são de trás
+ */
+int infra[] = {A0, A1, A2, A3, A4, A5, A6, A7};
+int lenInfra = sizeof(infra)/sizeof(infra[0]);
+int pinosIRLeitura;
+
+int* sensoresIR;
+
+/*
+ * DECLARACAO DE FUNCOES
+ */
+ 
+//PWM - velocidade
+void pwm(byte pwmD, byte pwmE);
+
+//Ir para frente
+void frente();
+
+//Ir para esquerda
+void esquerda();
+
+//Ir para direita
+void direita();
+
+//Ler sensores IR
+int lerSensor(int porta);
+
+//Imprimir Sensores IR
+void imprimirIR();
+
+/*
+ *  SETUP E LOOP
+ */
+//Configurações iniciais
+void setup() {
+  //Ponte H: Saída
+  for (int p = 0; p < lenPonteH; p++) pinMode(ponteH[p], OUTPUT);
+
+  //SensoresIR: Opcional para entrada
+  for (int o = 0; o < lenInfra; o++) pinMode(infra[o], INPUT);
+
+  //Porta serial
+  Serial.begin(9600);
+}
+
+//Executar loop infinito
+void loop()
+{
+  //Leitura dos sensores IR em tempo real
+  int valD = lerSensor(A6); //Direita
+  int valE = lerSensor(A4); //Esquerda
+
+  //Imprimir os valores dos IRs
+  //imprimirIR();
+  //delay(500);
+ 
+  //Corrigir para a esquerda
+  if (valD > 33)
+  {
+    pwm(150, 0);
+    direita();
+  }
+ 
+  //Corrigir para a direita
+  if (valE > 465)
+  {
+    pwm(0, 150);
+    esquerda();
+  }
+ 
+  //Ir para frente dentro das condicoes
+  if (valD < 48 && valE < 48) {
+    pwm(70, 70);
+    frente();
+  }
+}
+
+/*
+ * Funções
+ *
+ */
+//PWM - velocidade
+void pwm(byte pwmD, byte pwmE) {
+  analogWrite(ponteH[0], pwmD); //Direita
+  analogWrite(ponteH[lenPonteH-1], pwmE); //Esquerda
+}
+
+//Ir para frente
+void frente() {
+  //Direita
+  digitalWrite(ponteH[2], HIGH); 
+  digitalWrite(ponteH[1], LOW); 
+  //Esquerda
+  digitalWrite(ponteH[3], HIGH);
+  digitalWrite(ponteH[4], LOW);
+}
+
+//Ir para esquerda
+void esquerda(){
+  //Direita
+  digitalWrite(ponteH[1], LOW);
+  digitalWrite(ponteH[2], LOW);
+  //Esquerda
+  digitalWrite(ponteH[3], HIGH);
+  digitalWrite(ponteH[4], LOW);
+}
+
+//Ir para direita
+void direita(){  
+  //Direita
+  digitalWrite(ponteH[1], LOW);
+  digitalWrite(ponteH[2], HIGH);
+  //Esquerda
+  digitalWrite(ponteH[3], LOW);
+  digitalWrite(ponteH[4], LOW);
+  
+}
+
+void freio(){
+  //Direita
+  digitalWrite(ponteH[1], HIGH);
+  digitalWrite(ponteH[2], HIGH);
+  //Esquerda
+  digitalWrite(ponteH[3], HIGH);
+  digitalWrite(ponteH[4], HIGH);
+    //OBS: ligar o freio consome bastante bateria
+}
+
+//Ler sensores IR
+int lerSensor(int porta)
+{
+  return analogRead(porta);
+}
+
+void imprimirIR()
+{
+  String val = "";
+  for(int o = 0; o < lenInfra; o++)
+  {
+    val += "Sensor[" + String(o) + "] = " + String(lerSensor(infra[o])) + "\n";
+  }
+  Serial.println(val);
+}
